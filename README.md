@@ -8,7 +8,7 @@
 
 **Multi-platform social posting and replying with automatic validation, image uploads, threads, and cost transparency.**
 
-**Repository:** [github.com/teeclaw/social-post](https://github.com/teeclaw/social-post)
+**Repository:** [github.com/teeclaw/openclaw-social-post](https://github.com/teeclaw/openclaw-social-post)
 
 ## Features
 
