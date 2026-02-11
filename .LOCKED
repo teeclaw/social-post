@@ -1,0 +1,15 @@
+LOCKED: This skill is marked read-only.
+
+Do not modify without explicit approval from 0xdas.
+
+Version: 1.5.1 (stable)
+Locked: 2026-02-11
+Reason: Production stable, prevent accidental modifications
+
+Changes require:
+1. User approval
+2. Version bump
+3. Full testing
+4. Documentation updates
+
+Repository: https://github.com/teeclaw/openclaw-social-post
