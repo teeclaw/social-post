@@ -1,7 +1,7 @@
 ---
 name: social-post
-version: 1.5.0
-description: Post and reply to X/Twitter and Farcaster with text and images. Features multi-account support, dynamic Twitter tier detection (Basic/Premium), auto-variation to avoid duplicate content detection, draft preview, character validation, threads, replies, and image uploads. Consumption-based pricing for X API, pay-per-cast for Farcaster.
+version: 1.5.1
+description: Post and reply to X/Twitter and Farcaster with text and images. Features multi-account support, dynamic Twitter tier detection (Basic/Premium), auto-variation to avoid duplicate content detection, draft preview, character validation, threads, replies, and image uploads. Consumption-based pricing for X API, pay-per-cast for Farcaster. Link shortening preserves GitHub URLs.
 author: 0xdas
 license: MIT
 tags: [twitter, farcaster, social, posting, automation, threads, x-api, consumption-based, multi-account, anti-spam]
@@ -16,7 +16,7 @@ metadata:
 
 Post to Twitter and/or Farcaster with automatic character limit validation and image upload handling.
 
-**Repository:** [github.com/teeclaw/social-post](https://github.com/teeclaw/social-post)
+**Repository:** [github.com/teeclaw/openclaw-social-post](https://github.com/teeclaw/openclaw-social-post)
 
 ## Features
 
