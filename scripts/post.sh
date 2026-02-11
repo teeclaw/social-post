@@ -246,7 +246,7 @@ fi
 # For Premium accounts posting > 280 chars (but within Premium limit):
 # Offer threading as an option (unless --thread was explicitly set or --auto-confirm)
 if [ "$POST_TWITTER" = true ] && [ "$TWITTER_VALID" = true ] && [ "$FORCE_THREAD" = false ]; then
-  local char_count=${#TEXT}
+  char_count=${#TEXT}
   if [[ "$TWITTER_TIER" =~ ^premium ]]; then
     # Premium account - check if text is > 280 (traditional limit)
     if [ "$char_count" -gt 280 ] && [ "$char_count" -le "$TWITTER_LIMIT" ]; then
@@ -307,16 +307,24 @@ if [ "$DRY_RUN" = true ]; then
   exit 0
 fi
 
-# Confirmation prompt (skip if running non-interactively or with --yes flag)
-if [ "$AUTO_CONFIRM" = false ] && [ -t 0 ]; then
-  echo -n "Proceed with posting? (y/n): "
-  read -r CONFIRM
-  if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
-    echo "Cancelled."
-    exit 0
+# Confirmation prompt (REQUIRED for non-interactive mode)
+if [ "$AUTO_CONFIRM" = false ]; then
+  if [ -t 0 ]; then
+    # Interactive mode: prompt user
+    echo -n "Proceed with posting? (y/n): "
+    read -r CONFIRM
+    if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+      echo "Cancelled."
+      exit 0
+    fi
+    echo ""
+  else
+    # Non-interactive mode: require --yes flag
+    echo "Error: Non-interactive mode requires explicit --yes flag for safety"
+    echo "Usage: post.sh --yes \"Your message\""
+    exit 1
   fi
-  echo ""
-elif [ "$AUTO_CONFIRM" = true ]; then
+else
   echo "Auto-confirmed (--yes flag). Proceeding..."
   echo ""
 fi

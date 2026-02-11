@@ -230,16 +230,24 @@ if [ "$DRY_RUN" = true ]; then
   exit 0
 fi
 
-# Confirmation prompt (skip if running non-interactively or with --yes flag)
-if [ "$AUTO_CONFIRM" = false ] && [ -t 0 ]; then
-  echo -n "Proceed with reply? (y/n): "
-  read -r CONFIRM
-  if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
-    echo "Cancelled."
-    exit 0
+# Confirmation prompt (REQUIRED for non-interactive mode)
+if [ "$AUTO_CONFIRM" = false ]; then
+  if [ -t 0 ]; then
+    # Interactive mode: prompt user
+    echo -n "Proceed with reply? (y/n): "
+    read -r CONFIRM
+    if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+      echo "Cancelled."
+      exit 0
+    fi
+    echo ""
+  else
+    # Non-interactive mode: require --yes flag
+    echo "Error: Non-interactive mode requires explicit --yes flag for safety"
+    echo "Usage: reply.sh --yes --twitter <id> \"Your reply\""
+    exit 1
   fi
-  echo ""
-elif [ "$AUTO_CONFIRM" = true ]; then
+else
   echo "Auto-confirmed (--yes flag). Proceeding..."
   echo ""
 fi
