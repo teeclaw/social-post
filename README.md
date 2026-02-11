@@ -2,7 +2,7 @@
 
 > Post and reply to X/Twitter and Farcaster from one command.
 
-[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.1-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-skill-orange.svg)](https://openclaw.ai)
 
@@ -20,7 +20,7 @@
 ✅ **Cost transparency** - Clear pricing for both platforms documented  
 ✅ **Thread support** - Auto-split long posts into numbered threads  
 ✅ **Image uploads** - Attach images to posts and replies on both platforms  
-✅ **Link shortening** - Compress URLs to save characters  
+✅ **Link shortening** - Compress URLs to save characters (preserves GitHub links)  
 ✅ **Character validation** - Validates limits before posting (252 chars / 288 bytes)  
 ✅ **Balance monitoring** - Check Farcaster wallet balance anytime  
 ✅ **Auto-truncate** - Optional automatic text shortening  
@@ -273,7 +273,7 @@ scripts/reply.sh --twitter 123456 --yes "Quick acknowledgment"
 ✅ Automatic character/byte limit validation  
 ✅ Image upload support (for posts and replies)  
 ✅ **Thread support** - split long text into numbered posts  
-✅ **Link shortening** - compress URLs to save characters  
+✅ **Link shortening** - compress URLs to save characters (preserves GitHub links)  
 ✅ Auto-truncate option  
 ✅ Dry-run mode  
 
@@ -359,7 +359,7 @@ scripts/reply.sh --twitter 123456 --yes "Quick acknowledgment"
 **Character limit exceeded:**
 - Use `--truncate` flag to auto-shorten
 - Use `--thread` to split into multiple posts
-- Use `--shorten-links` to compress URLs
+- Use `--shorten-links` to compress URLs (GitHub links stay full)
 - Check byte count for emojis (count more on Farcaster)
 
 **Rate limit errors (Twitter):**

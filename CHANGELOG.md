@@ -2,6 +2,20 @@
 
 All notable changes to the social-post skill will be documented in this file.
 
+## [1.5.1] - 2026-02-11
+
+### Changed
+- **GitHub URL preservation**: GitHub links now kept full when using `--shorten-links`
+  - URLs containing `github.com` are excluded from TinyURL shortening
+  - Preserves repository and project link visibility
+  - Other URLs still shortened normally to save characters
+  - Updated `shorten_links_in_text()` and `estimate_link_savings()` in `lib/links.sh`
+
+### Technical
+- Pattern matching on `github.com` domain to skip shortening
+- Savings estimation now excludes GitHub URLs from character count
+- No breaking changes: Existing link shortening behavior unchanged for non-GitHub URLs
+
 ## [1.5.0] - 2026-02-11
 
 ### Added
