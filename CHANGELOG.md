@@ -2,6 +2,57 @@
 
 All notable changes to the social-post skill will be documented in this file.
 
+## [1.5.0] - 2026-02-11
+
+### Added
+- **Dynamic Twitter tier detection**: Auto-detects Basic vs Premium/Premium+ accounts
+  - Automatically adjusts character limits based on account subscription tier
+  - Basic/Free accounts: 280 chars (252 with buffer)
+  - Premium/Premium+ accounts: 25,000 chars (22,500 with buffer)
+  - Smart caching: Tier cached for 24 hours to minimize API calls
+  - Graceful fallback: Defaults to Basic tier if detection fails
+- **Interactive threading choice for Premium accounts**:
+  - When Premium user posts > 280 but < 25k chars, shows draft as single long post first
+  - Prompts: "Thread this instead? (y/n)"
+  - User can choose between single long post or threaded format
+  - Respects `--thread` flag to force threading (skip prompt)
+  - Respects `--auto-confirm` flag to skip all prompts
+- **New tier detection library**: `lib/tier-detection.sh`
+  - `detect_twitter_tier()`: Detects Basic/Premium/Premium+ tier via Twitter API
+  - `get_twitter_char_limit()`: Returns raw character limit for account
+  - `get_twitter_char_limit_buffered()`: Returns limit with 10% safety buffer
+  - `cache_tier()`: Stores tier detection result with timestamp
+  - `get_cached_tier()`: Retrieves cached tier if < 24h old
+- **New flags**:
+  - `--refresh-tier`: Force refresh account tier cache (useful after upgrading subscription)
+  - Updated `--thread`: Now explicitly forces thread mode (was implicit before)
+  - Updated `--auto-confirm`: Now skips ALL prompts including threading choice
+- **Tier cache file**: `~/.openclaw/workspace/memory/twitter-account-tiers.json`
+  - Stores tier detection results per account
+  - JSON format: `{"account": {"tier": "premium", "checkedAt": 1234567890}}`
+  - Auto-expires after 24 hours
+
+### Changed
+- **Dynamic character limits**: Twitter limits now adjust per account tier automatically
+- **Updated validation**: `lib/validate.sh` now uses dynamic limits from tier detection
+- **Updated threading logic**: `lib/threads.sh` respects Premium account 25k limit
+- **Improved draft preview**: Shows detected account tier and available character limit
+- **Enhanced help text**: Documents tier detection, Premium features, and new flags
+
+### Technical
+- Twitter API v2 used for tier detection
+- Tier detection uses `/users/me` endpoint with `user.fields=subscription_type`
+- Fallback detection via test post attempt (checks error message for char limit)
+- Cache invalidation after 24 hours or with `--refresh-tier` flag
+- Multi-account aware: Each account can have different tier
+- Zero breaking changes: Existing workflows continue to work
+
+### Use Cases
+- Premium users can post long-form threads without artificial character limits
+- Basic users get accurate 280-char validation
+- Automatic adaptation when upgrading from Basic to Premium
+- Single skill supports both Basic and Premium posting workflows
+
 ## [1.4.0] - 2026-02-10
 
 ### Added

@@ -1,7 +1,7 @@
 ---
 name: social-post
-version: 1.4.0
-description: Post and reply to X/Twitter and Farcaster with text and images. Features multi-account support, auto-variation to avoid duplicate content detection, draft preview, character validation, threads, replies, and image uploads. Consumption-based pricing for X API, pay-per-cast for Farcaster.
+version: 1.5.0
+description: Post and reply to X/Twitter and Farcaster with text and images. Features multi-account support, dynamic Twitter tier detection (Basic/Premium), auto-variation to avoid duplicate content detection, draft preview, character validation, threads, replies, and image uploads. Consumption-based pricing for X API, pay-per-cast for Farcaster.
 author: 0xdas
 license: MIT
 tags: [twitter, farcaster, social, posting, automation, threads, x-api, consumption-based, multi-account, anti-spam]
@@ -20,14 +20,17 @@ Post to Twitter and/or Farcaster with automatic character limit validation and i
 
 ## Features
 
+- ✅ **Dynamic Twitter tier detection** - auto-detects Basic vs Premium accounts (cached 24h)
 - ✅ **Multi-account support** - manage multiple Twitter accounts from one skill
 - ✅ **Auto-variation** - avoid Twitter's duplicate content detection with `--vary` flag
+- ✅ **Premium account support** - post up to 25k characters in single tweet
+- ✅ **Interactive threading choice** - Premium users can choose single post or thread
 - ✅ Post to Twitter only
 - ✅ Post to Farcaster only  
 - ✅ Post to both platforms simultaneously
 - ✅ **Reply to tweets and casts** - respond to specific posts on both platforms
 - ✅ **Draft preview** - shows exactly what will be posted before confirmation
-- ✅ Character/byte limit validation
+- ✅ Character/byte limit validation (dynamic per account tier)
 - ✅ Image upload support (for posts and replies)
 - ✅ **Thread support** - automatically split long text into numbered posts
 - ✅ **Link shortening** - compress URLs using TinyURL (saves characters)
@@ -35,8 +38,37 @@ Post to Twitter and/or Farcaster with automatic character limit validation and i
 
 ## Platform Limits
 
-- **Twitter:** 252 characters (280 with 10% safety buffer)
-- **Farcaster:** 288 bytes (320 with 10% safety buffer)
+### Dynamic Twitter Limits (Auto-Detected)
+
+The skill automatically detects your Twitter account tier and adjusts character limits:
+
+- **Basic/Free accounts:** 252 characters (280 with 10% safety buffer)  
+- **Premium/Premium+ accounts:** 22,500 characters (25,000 with 10% safety buffer)
+
+### Farcaster Limits
+
+- **288 bytes** (320 with 10% safety buffer)
+
+### How Tier Detection Works
+
+1. **First Use:** On your first post, the skill calls Twitter API to detect your subscription tier
+2. **Caching:** Tier is cached for 24 hours to minimize API calls
+3. **Auto-Refresh:** Cache expires after 24 hours, then re-checks on next post
+4. **Manual Refresh:** Use `--refresh-tier` flag to force immediate re-check
+
+**Premium Posting Behavior:**
+
+When posting with a Premium account:
+- Text ≤ 280 chars → posts normally (single tweet)
+- Text > 280 but ≤ 22,500 chars → shows draft as **single long post** first
+  - Prompts: "Thread this instead? (y/n)"
+  - If YES → splits into threaded posts for review
+  - If NO → posts as single long tweet
+- Text > 22,500 chars → auto-threads (exceeds Premium limit)
+
+**Force Threading:**
+- Use `--thread` flag to skip prompt and force threading
+- Use `--auto-confirm` to skip all prompts (uses best format automatically)
 
 ## Setup & Credentials
 
@@ -255,11 +287,12 @@ scripts/reply.sh --twitter 123456 --farcaster 0xabcd... "Great discussion!"
 - `--account <name>` - Twitter account to use (lowercase prefix from .env)
 - `--vary` - Auto-vary text to avoid duplicate content detection
 - `--image <path>` - Attach image
-- `--thread` - Split long text into numbered thread
+- `--thread` - Force thread mode (split into multiple posts)
+- `--refresh-tier` - Force refresh Twitter account tier cache (Basic vs Premium)
 - `--shorten-links` - Shorten URLs to save characters
 - `--truncate` - Auto-truncate if over limit
 - `--dry-run` - Preview without posting
-- `-y, --yes` - Skip confirmation prompt (auto-confirm)
+- `-y, --yes` - Skip ALL confirmation prompts (auto-confirm, no threading prompt)
 
 #### For `reply.sh` (replying)
 
@@ -285,6 +318,19 @@ scripts/post.sh --account myaccount --twitter "Message from my second account"
 
 # Auto-vary text to avoid duplicate content detection
 scripts/post.sh --vary --twitter "Same text, subtle variations added automatically"
+
+# Premium account - post long text (interactive choice for threading)
+scripts/post.sh --twitter "Very long text that exceeds 280 characters but is under 25k... 
+(The skill will detect Premium tier and ask: 'Thread this instead? (y/n)')"
+
+# Premium account - force threading (skip prompt)
+scripts/post.sh --twitter --thread "Long text that will be split into thread regardless of Premium status"
+
+# Premium account - force single long post (skip prompt)
+scripts/post.sh --twitter --auto-confirm "Long text that will post as single tweet on Premium account"
+
+# Refresh account tier cache (if you just upgraded to Premium)
+scripts/post.sh --refresh-tier --twitter "First post after upgrading to Premium"
 
 # Twitter announcement with image
 scripts/post.sh --twitter --image ~/screenshot.png "New feature shipped! 🚀"

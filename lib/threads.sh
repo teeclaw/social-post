@@ -1,6 +1,10 @@
 #!/bin/bash
 # Thread support for social-post
 
+# Load tier detection library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/tier-detection.sh"
+
 # Split text into thread parts
 # Args: text, platform (twitter|farcaster)
 split_into_thread() {
@@ -8,9 +12,10 @@ split_into_thread() {
   local platform="$2"
   
   # Determine limit based on platform
-  local limit=252
-  if [ "$platform" = "farcaster" ]; then
-    limit=288
+  local limit=288
+  if [ "$platform" = "twitter" ]; then
+    local account="${TWITTER_ACCOUNT:-mr_crtee}"
+    limit=$(get_twitter_char_limit_buffered "$account")
   fi
   
   # Reserve space for numbering (e.g., " (1/3)")
@@ -118,13 +123,15 @@ needs_threading() {
   local text="$1"
   local platform="$2"
   
-  local limit=252
-  if [ "$platform" = "farcaster" ]; then
-    limit=288
+  local limit=288
+  if [ "$platform" = "twitter" ]; then
+    local account="${TWITTER_ACCOUNT:-mr_crtee}"
+    limit=$(get_twitter_char_limit_buffered "$account")
+    [ "${#text}" -gt "$limit" ] && return 0
+  else
+    # Farcaster
     local byte_count=$(echo -n "$text" | wc -c)
     [ "$byte_count" -gt "$limit" ] && return 0
-  else
-    [ "${#text}" -gt "$limit" ] && return 0
   fi
   
   return 1

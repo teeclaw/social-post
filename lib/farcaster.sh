@@ -14,6 +14,10 @@ _load_cred() {
   if [[ "$value" == GPG:* ]]; then
     # Decrypt from GPG secrets
     local gpg_key="${value#GPG:}"
+    # Load passphrase from .env if not already in environment
+    if [ -z "${OPENCLAW_GPG_PASSPHRASE:-}" ]; then
+      export OPENCLAW_GPG_PASSPHRASE=$(grep "^OPENCLAW_GPG_PASSPHRASE=" "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2-)
+    fi
     local passphrase="${OPENCLAW_GPG_PASSPHRASE:-}"
     if [ -n "$passphrase" ]; then
       value=$(echo "$passphrase" | gpg -d --batch --quiet --passphrase-fd 0 "$HOME/.openclaw/.env.secrets.gpg" 2>/dev/null | python3 -c "import json,sys; print(json.load(sys.stdin).get('$gpg_key',''))")

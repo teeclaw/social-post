@@ -1,20 +1,27 @@
 #!/bin/bash
 # Validation library for social-post
 
-# 10% safety buffer applied
-TWITTER_LIMIT=252        # 280 - 10% = 252
+# Farcaster byte limit (10% safety buffer applied)
 FARCASTER_BYTE_LIMIT=288  # 320 - 10% = 288
 
-# Check Twitter character count
+# Load tier detection library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/tier-detection.sh"
+
+# Check Twitter character count (dynamic limit based on account tier)
 validate_twitter() {
   local text="$1"
-  local char_count=${#text}
+  local account="${TWITTER_ACCOUNT:-mr_crtee}"
+  local force_refresh="${2:-false}"
   
-  if [ "$char_count" -gt "$TWITTER_LIMIT" ]; then
-    echo "❌ Twitter: $char_count/$TWITTER_LIMIT characters (over by $(($char_count - $TWITTER_LIMIT)))" >&2
+  local char_count=${#text}
+  local twitter_limit=$(get_twitter_char_limit_buffered "$account" "$force_refresh")
+  
+  if [ "$char_count" -gt "$twitter_limit" ]; then
+    echo "❌ Twitter: $char_count/$twitter_limit characters (over by $(($char_count - $twitter_limit)))" >&2
     return 1
   else
-    echo "✅ Twitter: $char_count/$TWITTER_LIMIT characters" >&2
+    echo "✅ Twitter: $char_count/$twitter_limit characters" >&2
     return 0
   fi
 }
@@ -36,8 +43,11 @@ validate_farcaster() {
 # Truncate text to fit platform
 truncate_for_twitter() {
   local text="$1"
-  if [ "${#text}" -gt "$TWITTER_LIMIT" ]; then
-    echo "${text:0:$((TWITTER_LIMIT-3))}..."
+  local account="${TWITTER_ACCOUNT:-mr_crtee}"
+  local twitter_limit=$(get_twitter_char_limit_buffered "$account")
+  
+  if [ "${#text}" -gt "$twitter_limit" ]; then
+    echo "${text:0:$((twitter_limit-3))}..."
   else
     echo "$text"
   fi

@@ -26,6 +26,8 @@ AUTO_CONFIRM=false
 VARY_TEXT=false
 TEXT=""
 TWITTER_ACCOUNT="mr_crtee"  # Default account
+REFRESH_TIER=false
+FORCE_THREAD=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -48,6 +50,11 @@ while [[ $# -gt 0 ]]; do
       ;;
     --thread)
       THREAD_MODE=true
+      FORCE_THREAD=true
+      shift
+      ;;
+    --refresh-tier)
+      REFRESH_TIER=true
       shift
       ;;
     --shorten-links)
@@ -83,10 +90,11 @@ Options:
   --vary            Auto-vary text to avoid duplicate content detection
   --image <path>    Attach image
   --truncate        Auto-truncate if over limit
-  --thread          Split long text into thread
+  --thread          Force thread mode (split into multiple posts)
+  --refresh-tier    Force refresh account tier cache (Basic vs Premium)
   --shorten-links   Shorten URLs to save characters
   --dry-run         Preview without posting
-  -y, --yes         Skip confirmation prompt
+  -y, --yes         Skip all confirmation prompts
   --help            Show this help
 
 Examples:
@@ -101,8 +109,16 @@ Examples:
   post.sh --twitter --image pic.png "New feature"     # Twitter with image
 
 Platform Limits:
-  Twitter:   252 characters (with 10% buffer)
-  Farcaster: 288 bytes (with 10% buffer)
+  Twitter:   Auto-detected based on account tier (cached for 24h)
+             - Basic/Free: 252 chars (280 - 10% buffer)
+             - Premium/Premium+: 22,500 chars (25,000 - 10% buffer)
+  Farcaster: 288 bytes (320 - 10% buffer)
+
+Tier Detection:
+  The skill automatically detects your Twitter account tier on first use.
+  Premium accounts can post up to 25k characters in a single tweet.
+  Basic accounts are limited to 280 characters per tweet.
+  Use --refresh-tier to force a tier re-check (if subscription changed).
 
 Costs:
   Twitter:   Consumption-based (pay per API request, no tiers/subscriptions)
@@ -156,12 +172,32 @@ if [ "$SHORTEN_LINKS" = true ]; then
   echo ""
 fi
 
+# Detect Twitter account tier (if posting to Twitter)
+TWITTER_TIER="basic"
+TWITTER_LIMIT=252
+if [ "$POST_TWITTER" = true ]; then
+  echo "Detecting Twitter account tier..."
+  source "$LIB_DIR/tier-detection.sh"
+  TWITTER_TIER=$(detect_twitter_tier "$TWITTER_ACCOUNT" "$REFRESH_TIER")
+  TWITTER_LIMIT=$(get_twitter_char_limit_buffered "$TWITTER_ACCOUNT" "$REFRESH_TIER")
+  
+  case "$TWITTER_TIER" in
+    premium|premium_plus)
+      echo "✓ Twitter account: Premium ($TWITTER_LIMIT chars available)"
+      ;;
+    basic)
+      echo "✓ Twitter account: Basic ($TWITTER_LIMIT chars available)"
+      ;;
+  esac
+  echo ""
+fi
+
 # Validate character/byte limits
 TWITTER_VALID=true
 FARCASTER_VALID=true
 
 if [ "$POST_TWITTER" = true ]; then
-  validate_twitter "$TEXT" || TWITTER_VALID=false
+  validate_twitter "$TEXT" "$REFRESH_TIER" || TWITTER_VALID=false
 fi
 
 if [ "$POST_FARCASTER" = true ]; then
@@ -205,6 +241,35 @@ if [ "$VARY_TEXT" = true ]; then
   ORIGINAL_TEXT="$TEXT"
   TEXT=$(vary_text "$TEXT")
   echo ""
+fi
+
+# For Premium accounts posting > 280 chars (but within Premium limit):
+# Offer threading as an option (unless --thread was explicitly set or --auto-confirm)
+if [ "$POST_TWITTER" = true ] && [ "$TWITTER_VALID" = true ] && [ "$FORCE_THREAD" = false ]; then
+  local char_count=${#TEXT}
+  if [[ "$TWITTER_TIER" =~ ^premium ]]; then
+    # Premium account - check if text is > 280 (traditional limit)
+    if [ "$char_count" -gt 280 ] && [ "$char_count" -le "$TWITTER_LIMIT" ]; then
+      # Text would fit in single Premium post, but offer threading
+      if [ "$AUTO_CONFIRM" = false ] && [ -t 0 ]; then
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "📝 Premium account: Your text ($char_count chars) can be posted as:"
+        echo "   1. Single long post (uses Premium 25k char limit)"
+        echo "   2. Thread (split into multiple tweets)"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo ""
+        echo -n "Thread this instead? (y/n): "
+        read -r THREAD_CHOICE
+        if [[ "$THREAD_CHOICE" =~ ^[Yy]$ ]]; then
+          THREAD_MODE=true
+          echo "→ Preparing threaded draft..."
+        else
+          echo "→ Posting as single long tweet..."
+        fi
+        echo ""
+      fi
+    fi
+  fi
 fi
 
 # Show draft preview
